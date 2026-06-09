@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PolicyBot — Acme Corporation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design tokens ─────────────────────────────────── */
+    :root {
+      --navy:    #0f1b2d;
+      --navy2:   #162236;
+      --navy3:   #1e2f47;
+      --teal:    #00c9a7;
+      --teal2:   #00a98d;
+      --cream:   #f5f0e8;
+      --cream2:  #ede7d9;
+      --text:    #e8e4dc;
+      --muted:   #8a96a8;
+      --border:  rgba(255,255,255,0.07);
+      --radius:  14px;
+      --shadow:  0 8px 40px rgba(0,0,0,0.35);
+    }
+
+    /* ── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--navy); color: var(--text); }
+
+    /* ── Layout ────────────────────────────────────────── */
+    body { display: flex; flex-direction: column; }
+
+    /* ── Header ────────────────────────────────────────── */
+    header {
+      background: var(--navy2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+    .logo-sub {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(0,201,167,0.1);
+      border: 1px solid rgba(0,201,167,0.25);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      color: var(--teal);
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      background: var(--teal);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Main split ─────────────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ────────────────────────────────────────── */
+    .sidebar {
+      width: 260px;
+      background: var(--navy2);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .sidebar-title {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .suggestion-btn {
+      background: var(--navy3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.8rem;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      line-height: 1.4;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .suggestion-btn:hover {
+      background: rgba(0,201,167,0.08);
+      border-color: rgba(0,201,167,0.3);
+      transform: translateX(2px);
+    }
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.75rem 0.5rem;
+    }
+    .policy-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .policy-chip {
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .policy-chip::before {
+      content: '';
+      width: 5px; height: 5px;
+      background: var(--teal);
+      border-radius: 50%;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    /* ── Chat area ──────────────────────────────────────── */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      scroll-behavior: smooth;
+    }
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Welcome ─────────────────────────────────────────── */
+    .welcome {
+      text-align: center;
+      padding: 3rem 2rem;
+      max-width: 560px;
+      margin: auto;
+    }
+    .welcome-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      border-radius: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 8px 32px rgba(0,201,167,0.3);
+    }
+    .welcome h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.2;
+    }
+    .welcome p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+
+    /* ── Messages ────────────────────────────────────────── */
+    .msg {
+      display: flex;
+      gap: 12px;
+      max-width: 820px;
+      width: 100%;
+      animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+    .msg.bot  { align-self: flex-start; }
+
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .avatar.bot { background: linear-gradient(135deg, var(--teal), var(--teal2)); }
+    .avatar.user { background: var(--navy3); border: 1px solid var(--border); }
+
+    .bubble {
+      padding: 0.9rem 1.1rem;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      line-height: 1.65;
+      max-width: 680px;
+    }
+    .msg.user .bubble {
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      color: #0f1b2d;
+      font-weight: 500;
+      border-radius: var(--radius) var(--radius) 4px var(--radius);
+    }
+    .msg.bot .bubble {
+      background: var(--navy2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) var(--radius) 4px;
+    }
+
+    /* ── Sources block ───────────────────────────────────── */
+    .sources-block {
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .sources-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .source-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 0.65rem;
+    }
+    .source-tag {
+      background: rgba(0,201,167,0.1);
+      border: 1px solid rgba(0,201,167,0.25);
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      color: var(--teal);
+    }
+    .snippets { display: flex; flex-direction: column; gap: 6px; }
+    .snippet {
+      background: var(--navy3);
+      border-left: 2px solid var(--teal);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .snippet strong {
+      color: var(--teal);
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .latency {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    /* ── Typing indicator ────────────────────────────────── */
+    .typing { display: flex; gap: 5px; padding: 0.7rem 1rem; }
+    .typing span {
+      width: 7px; height: 7px;
+      background: var(--teal);
+      border-radius: 50%;
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.15s; }
+    .typing span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40%           { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── Input bar ───────────────────────────────────────── */
+    .input-bar {
+      padding: 1rem 2rem 1.5rem;
+      background: var(--navy);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .input-wrap {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      max-width: 820px;
+      margin: 0 auto;
+      background: var(--navy2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 10px 10px 16px;
+      transition: border-color 0.2s;
+    }
+    .input-wrap:focus-within {
+      border-color: rgba(0,201,167,0.5);
+      box-shadow: 0 0 0 3px rgba(0,201,167,0.08);
+    }
+    textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      resize: none;
+      line-height: 1.5;
+      max-height: 140px;
+      min-height: 24px;
+    }
+    textarea::placeholder { color: var(--muted); }
+    .send-btn {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.15s, opacity 0.15s;
+      color: var(--navy);
+    }
+    .send-btn:hover:not(:disabled) { transform: scale(1.05); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .input-hint {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    /* ── Error state ─────────────────────────────────────── */
+    .error-bubble {
+      background: rgba(255,80,80,0.1);
+      border: 1px solid rgba(255,80,80,0.3);
+      color: #ff9090;
+    }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 680px) {
+      .sidebar { display: none; }
+      .messages { padding: 1rem; }
+      .input-bar { padding: 0.75rem 1rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ───────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">📋</div>
+    <div>
+      <div class="logo-text">PolicyBot</div>
+      <div class="logo-sub">Acme Corporation</div>
+    </div>
+  </div>
+  <div class="status-pill">
+    <div class="status-dot"></div>
+    Online
+  </div>
+</header>
+
+<!-- ── Main ─────────────────────────────────────────────── -->
+<main>
+
+  <!-- Sidebar with suggestions -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Try asking…</div>
+
+    <button class="suggestion-btn" onclick="askSuggestion(this)">How many vacation days do employees get per year?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">What is the work-from-home policy?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">What is the maximum meal reimbursement?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">How does the 401(k) company match work?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">What are the password requirements?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">How do I report a security incident?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">What is the performance rating scale?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">How long is the onboarding probation period?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">What is the annual L&D training budget?</button>
+    <button class="suggestion-btn" onclick="askSuggestion(this)">What wellness benefits are available?</button>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-title">Policy documents</div>
+    <div class="policy-list">
+      <div class="policy-chip">pto-policy.md</div>
+      <div class="policy-chip">remote-work-policy.md</div>
+      <div class="policy-chip">expense-policy.md</div>
+      <div class="policy-chip">security-policy.md</div>
+      <div class="policy-chip">code-of-conduct.md</div>
+      <div class="policy-chip">performance-policy.md</div>
+      <div class="policy-chip">it-policy.md</div>
+      <div class="policy-chip">onboarding-policy.md</div>
+      <div class="policy-chip">training-policy.md</div>
+      <div class="policy-chip">health-benefits-policy.md</div>
+    </div>
+  </aside>
+
+  <!-- Chat -->
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🤖</div>
+        <h1>Hi! I'm PolicyBot</h1>
+        <p>I can answer any question about Acme Corporation's policies — from PTO and remote work, to expenses, security, benefits, and more. Ask me anything!</p>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-wrap">
+        <textarea
+          id="questionInput"
+          placeholder="Ask about any company policy…"
+          rows="1"
+          maxlength="500"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendQuestion()" title="Send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">Press Enter to send · Shift+Enter for new line · Answers grounded in policy documents</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const messagesEl = document.getElementById('messages');
+  const inputEl    = document.getElementById('questionInput');
+  const sendBtn    = document.getElementById('sendBtn');
+  const welcomeEl  = document.getElementById('welcome');
+  let   isLoading  = false;
+
+  // Auto-resize textarea
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+  });
+
+  // Enter = send, Shift+Enter = newline
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendQuestion();
+    }
+  });
+
+  function askSuggestion(btn) {
+    inputEl.value = btn.textContent.trim();
+    inputEl.dispatchEvent(new Event('input'));
+    sendQuestion();
+  }
+
+  function appendMessage(role, content) {
+    // Hide welcome on first message
+    if (welcomeEl) welcomeEl.style.display = 'none';
+
+    const msg = document.createElement('div');
+    msg.className = `msg ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = `avatar ${role}`;
+    avatar.textContent = role === 'bot' ? '🤖' : '👤';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = content;
+
+    msg.appendChild(avatar);
+    msg.appendChild(bubble);
+    messagesEl.appendChild(msg);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  function showTyping() {
+    if (welcomeEl) welcomeEl.style.display = 'none';
+    const msg = document.createElement('div');
+    msg.className = 'msg bot';
+    msg.id = 'typing-indicator';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar bot';
+    avatar.textContent = '🤖';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+
+    msg.appendChild(avatar);
+    msg.appendChild(bubble);
+    messagesEl.appendChild(msg);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  function formatAnswer(data) {
+    const answer = data.answer || '';
+    let html = `<div style="white-space:pre-wrap">${escapeHtml(answer)}</div>`;
+
+    if (data.sources && data.sources.length > 0) {
+      html += `<div class="sources-block">`;
+      html += `<div class="sources-label">📎 Sources</div>`;
+      html += `<div class="source-tags">`;
+      data.sources.forEach(s => {
+        html += `<span class="source-tag">${escapeHtml(s)}</span>`;
+      });
+      html += `</div>`;
+
+      if (data.snippets && data.snippets.length > 0) {
+        html += `<div class="snippets">`;
+        data.snippets.slice(0, 2).forEach(sn => {
+          html += `<div class="snippet">
+            <strong>${escapeHtml(sn.source)}</strong>
+            ${escapeHtml(sn.text)}
+          </div>`;
+        });
+        html += `</div>`;
+      }
+      html += `</div>`;
+    }
+
+    if (data.latency) {
+      html += `<div class="latency">⚡ ${data.latency}s response time</div>`;
+    }
+
+    return html;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  async function sendQuestion() {
+    const question = inputEl.value.trim();
+    if (!question || isLoading) return;
+
+    isLoading = true;
+    sendBtn.disabled = true;
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+
+    // Show user message
+    appendMessage('user', escapeHtml(question));
+
+    // Show typing indicator
+    showTyping();
+
+    try {
+      const resp = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+
+      removeTyping();
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        appendMessage('bot', `<div class="error-bubble">⚠️ ${escapeHtml(err.error || 'Request failed')}</div>`);
+      } else {
+        const data = await resp.json();
+        appendMessage('bot', formatAnswer(data));
+      }
+    } catch (err) {
+      removeTyping();
+      appendMessage('bot', `<div class="error-bubble">⚠️ Network error: ${escapeHtml(err.message)}</div>`);
+    }
+
+    isLoading = false;
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+</script>
+</body>
+</html>

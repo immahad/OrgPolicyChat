@@ -1,0 +1,15 @@
+flask==3.0.3
+langchain==0.3.7
+langchain-community==0.3.7
+langchain-groq==0.2.1
+python-dotenv==1.0.1
+pypdf==5.1.0
+markdown==3.7
+# sentence-transformers REMOVED — used PyTorch (~400 MB RAM), causing OOM on
+# Render free tier (512 MB limit). Switched to chromadb's built-in ONNX
+# DefaultEmbeddingFunction (onnxruntime, ~150 MB) in rag/embeddings.py.
+numpy==1.26.4; python_version < "3.13"
+pytest==8.3.3
+gunicorn==23.0.0
+tqdm==4.67.1
+chromadb==0.6.3
